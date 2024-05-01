@@ -127,7 +127,9 @@ class MT19937Solver:
             return
 
         for i, expr in zip(range(bits), bit_expressions):
-            self.observed.append((expr, value & 2**i))
+            if value[i] is not None:
+                self.observed.append((expr, value[i]))
+        
     def v2n(self, vec):
         acc = 0
         for i, v in enumerate(vec):
@@ -140,17 +142,17 @@ class MT19937Solver:
         observed_values = []
         print("Allocating Matrix...")
         start = time.time()
-        M = Matrix(GF(2), size, size)
+        M = Matrix(GF(2), len(self.observed), size)
         print("Allocated Matrix:", time.time() - start)
-        observed = vector(GF(2), size)
+        observed = vector(GF(2), len(self.observed))
         print("Filling Matrix...")
-        for i,(row, value) in tqdm.tqdm(enumerate(self.observed), total=size):
+        for i,(row, value) in tqdm.tqdm(enumerate(self.observed)):
             matrix_row = [0]*size
             for monomial in row.monomials():
                 M[i,self.model.genindex[monomial]] = 1
             observed[i] = value
-        start = time.time()
         print("Solving Matrix for observed vector")
+        start = time.time()
         solution = M \ observed
         print("Computed solution:", time.time() - start)
         print("Converting to numbers...")
@@ -164,8 +166,10 @@ mrand = MT19937Solver()
 rand = random.Random(int(1))
 initial_state = rand.__getstate__()[1][:-1]
 for i in tqdm.tqdm(range(624*32)):
-    b = rand.getrandbits(1)
-    mrand.submit(1, b)
+    b = rand.choice([0,1])
+    b = (rand.getrandbits(32) >> 31) & 1
+    mrand.submit(32, [b]+[None]*32)
+    #mrand.submit(32, None)
 result = mrand.solve()
 for i in range(len(initial_state)):
     print(initial_state[i], result[i])
