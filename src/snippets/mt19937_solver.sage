@@ -128,6 +128,7 @@ class MT19937Solver:
 
         for i, expr in zip(range(bits), bit_expressions):
             if value[i] is not None:
+                pass
                 self.observed.append((expr, value[i]))
         
     def v2n(self, vec):
@@ -166,10 +167,13 @@ mrand = MT19937Solver()
 rand = random.Random(int(1))
 initial_state = rand.__getstate__()[1][:-1]
 for i in tqdm.tqdm(range(624*32)):
-    b = rand.choice([0,1])
+    #b = rand.choice([0,1])
     b = (rand.getrandbits(32) >> 31) & 1
-    mrand.submit(32, [b]+[None]*32)
-    #mrand.submit(32, None)
+    _ = (rand.getrandbits(32) >> 31) & 1
+    mrand.submit(32, [None]*31+[b])
+    #print(mrand.model.state[i%624].vars)
+    #input()
+    mrand.submit(32, None)
 result = mrand.solve()
 for i in range(len(initial_state)):
     print(initial_state[i], result[i])
