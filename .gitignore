@@ -1,2 +1,4 @@
 *.sage.py
 __pycache__
+*.pyc
+dist/
